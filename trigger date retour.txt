@@ -1,0 +1,32 @@
+
+
+DELIMITER //
+
+CREATE TRIGGER set_date_retour_prevue 
+BEFORE INSERT ON emprunts
+FOR EACH ROW
+BEGIN
+    -- Vérifie si `date_emprunt` est défini, puis ajoute 21 jours à `date_emprunt`
+    IF NEW.date_emprunt IS NOT NULL THEN
+        SET NEW.date_retour_prevue = DATE_ADD(NEW.date_emprunt, INTERVAL 21 DAY);
+    END IF;
+END //
+
+DELIMITER //
+
+CREATE TRIGGER set_date_retour_prevue_update
+AFTER UPDATE ON emprunts
+FOR EACH ROW
+BEGIN
+    -- Vérifie si `date_emprunt` a été modifiée et ajoute 21 jours à `date_emprunt` pour `date_retour_prevue`
+    IF NEW.date_emprunt IS NOT NULL AND NEW.date_emprunt <> OLD.date_emprunt THEN
+        -- On ne met plus à jour directement la table dans le trigger
+        -- On pourrait enregistrer l'ID de l'emprunt et la date dans une table temporaire ou procéder autrement
+        UPDATE emprunts
+        SET date_retour_prevue = DATE_ADD(NEW.date_emprunt, INTERVAL 21 DAY)
+        WHERE id_emprunt = NEW.id_emprunt;
+    END IF;
+END //
+
+DELIMITER ;
+
